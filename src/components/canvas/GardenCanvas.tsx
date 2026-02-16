@@ -53,7 +53,7 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     return Math.min(pixelsPerMeterX, pixelsPerMeterY, 20);
   }, [dimensions.width, dimensions.height, terrainWidth, terrainHeight]);
 
-  const scale = baseScale * zoom;
+  const effectiveScale = baseScale * zoom;
   const offsetX = (dimensions.width - terrainWidth * baseScale) / 2;
   const offsetY = (dimensions.height - terrainHeight * baseScale) / 2;
 
@@ -139,8 +139,8 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
       const clientX = e.clientX;
       const clientY = e.clientY;
 
-      const x = (clientX - rect.left - offsetX) / scale;
-      const y = (clientY - rect.top - offsetY) / scale;
+      const x = (clientX - rect.left - offsetX) / effectiveScale;
+      const y = (clientY - rect.top - offsetY) / effectiveScale;
 
       if (x < 0 || x > terrainWidth || y < 0 || y > terrainHeight) {
         return;
@@ -175,34 +175,34 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
         console.error('Failed to parse dropped item:', err);
       }
     },
-    [scale, offsetX, offsetY, terrainWidth, terrainHeight, addPlant, addObstacle, setSelectedElementId]
+    [effectiveScale, offsetX, offsetY, terrainWidth, terrainHeight, addPlant, addObstacle, setSelectedElementId]
   );
 
   const handlePlantDragEnd = useCallback(
     (instanceId: string) => (e: Konva.KonvaEventObject<DragEvent>) => {
       const node = e.target;
-      const x = (node.x() - offsetX) / scale;
-      const y = (node.y() - offsetY) / scale;
+      const x = (node.x() - offsetX) / effectiveScale;
+      const y = (node.y() - offsetY) / effectiveScale;
 
       updatePlant(instanceId, {
         position: { x, y },
       });
     },
-    [scale, offsetX, offsetY, updatePlant]
+    [effectiveScale, offsetX, offsetY, updatePlant]
   );
 
   const handleObstacleDragEnd = useCallback(
     (instanceId: string) => (e: Konva.KonvaEventObject<DragEvent>) => {
       const node = e.target;
-      const x = (node.x() - offsetX) / scale;
-      const y = (node.y() - offsetY) / scale;
+      const x = (node.x() - offsetX) / effectiveScale;
+      const y = (node.y() - offsetY) / effectiveScale;
 
       updateObstacle(instanceId, {
         x,
         y,
       });
     },
-    [scale, offsetX, offsetY, updateObstacle]
+    [effectiveScale, offsetX, offsetY, updateObstacle]
   );
 
   const renderTerrain = () => {
@@ -211,8 +211,8 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
         <Rect
           x={offsetX}
           y={offsetY}
-          width={terrainWidth * scale}
-          height={terrainHeight * scale}
+          width={terrainWidth * effectiveScale}
+          height={terrainHeight * effectiveScale}
           fill="#f5f5dc"
           stroke="#8b7355"
           strokeWidth={3}
@@ -225,8 +225,8 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
       <Rect
         x={offsetX}
         y={offsetY}
-        width={terrainWidth * scale}
-        height={terrainHeight * scale}
+        width={terrainWidth * effectiveScale}
+        height={terrainHeight * effectiveScale}
         fill="#e8f5e9"
         stroke="#2e7d32"
         strokeWidth={4}
@@ -244,12 +244,12 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     const majorGridColor = '#81c784';
 
     for (let i = 0; i <= terrainWidth; i += gridSize) {
-      const x = offsetX + i * scale;
+      const x = offsetX + i * effectiveScale;
       const isMajor = i % 5 === 0;
       lines.push(
         <Line
           key={`v-${i}`}
-          points={[x, offsetY, x, offsetY + terrainHeight * scale]}
+          points={[x, offsetY, x, offsetY + terrainHeight * effectiveScale]}
           stroke={isMajor ? majorGridColor : gridColor}
           strokeWidth={isMajor ? 1.5 : 0.5}
         />
@@ -257,12 +257,12 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     }
 
     for (let i = 0; i <= terrainHeight; i += gridSize) {
-      const y = offsetY + i * scale;
+      const y = offsetY + i * effectiveScale;
       const isMajor = i % 5 === 0;
       lines.push(
         <Line
           key={`h-${i}`}
-          points={[offsetX, y, offsetX + terrainWidth * scale, y]}
+          points={[offsetX, y, offsetX + terrainWidth * effectiveScale, y]}
           stroke={isMajor ? majorGridColor : gridColor}
           strokeWidth={isMajor ? 1.5 : 0.5}
         />
@@ -275,13 +275,13 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   const renderPlants = () => {
     const plantsLayer = plants.map((plant) => {
       const isSelected = selectedElementId === plant.instanceId;
-      const size = plant.size.width * plant.scale * scale;
+      const size = plant.size.width * plant.scale * effectiveScale;
 
       return (
         <Group
           key={plant.instanceId}
-          x={offsetX + plant.position.x * scale}
-          y={offsetY + plant.position.y * scale}
+          x={offsetX + plant.position.x * effectiveScale}
+          y={offsetY + plant.position.y * effectiveScale}
           rotation={plant.rotation}
           draggable={tool === 'select'}
           onClick={() => setSelectedElementId(plant.instanceId)}
@@ -316,10 +316,10 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
       const isSelected = selectedElementId === obstacle.instanceId;
       const visual = OBSTACLE_VISUALS[obstacle.type];
       
-      const x = offsetX + obstacle.x * scale;
-      const y = offsetY + obstacle.y * scale;
-      const width = obstacle.width * scale;
-      const height = obstacle.height * scale;
+      const x = offsetX + obstacle.x * effectiveScale;
+      const y = offsetY + obstacle.y * effectiveScale;
+      const width = obstacle.width * effectiveScale;
+      const height = obstacle.height * effectiveScale;
 
       const commonProps = {
         fill: isSelected ? visual.bgColor : visual.color,
@@ -404,6 +404,12 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
         ref={stageRef}
         width={dimensions.width}
         height={dimensions.height}
+        scaleX={zoom}
+        scaleY={zoom}
+        x={dimensions.width / 2}
+        y={dimensions.height / 2}
+        offsetX={-dimensions.width / 2}
+        offsetY={-dimensions.height / 2}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
       >
