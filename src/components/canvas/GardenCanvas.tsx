@@ -1,15 +1,17 @@
 'use client';
 
 import { useRef, useCallback, useEffect, useState, type ReactNode } from 'react';
-import { Stage, Layer, Rect, Circle, Group, Text, Line } from 'react-konva';
+import { Stage, Layer, Rect, Circle, Group, Text, Line, Ellipse } from 'react-konva';
 import type Konva from 'konva';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useConfigStore } from '@/stores/configStore';
+import { useGardenStore } from '@/stores/gardenStore';
 import { cn } from '@/lib/utils';
-import type { Plant } from '@/types';
+import type { Plant, PlacedObstacle } from '@/types';
 import { PlantSelectionToolbar } from './PlantSelectionToolbar';
 import { PlantTransformControls } from './PlantTransformControls';
 import { PlantDetailModal } from '@/components/ui/PlantDetailModal';
+import { OBSTACLE_VISUALS } from '@/data/terrainConstants';
 
 interface GardenCanvasProps {
   className?: string;
@@ -30,12 +32,17 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     selectedElementId,
     plants,
     terrain,
+    obstacles,
     setZoom,
     setPanOffset,
     setSelectedElementId,
     updatePlant,
     addPlant,
+    addObstacle,
+    updateObstacle,
   } = useCanvasStore();
+
+  const { terrain: gardenTerrain } = useGardenStore();
 
   const { config } = useConfigStore();
 
@@ -154,31 +161,42 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
       const data = e.dataTransfer.getData('application/json');
       if (!data) return;
 
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const x = (e.clientX - rect.left - panOffset.x) / zoom;
+      const y = (e.clientY - rect.top - panOffset.y) / zoom;
+
       try {
-        const plant: Plant = JSON.parse(data);
-        const stage = stageRef.current;
-        if (!stage) return;
-
-        const rect = containerRef.current?.getBoundingClientRect();
-        if (!rect) return;
-
-        const x = (e.clientX - rect.left - panOffset.x) / zoom;
-        const y = (e.clientY - rect.top - panOffset.y) / zoom;
-
-        const instanceId = `${plant.id}-${Date.now()}`;
-        addPlant({
-          ...plant,
-          instanceId,
-          position: { x, y },
-          rotation: 0,
-          scale: 1,
-        });
-        setSelectedElementId(instanceId);
+        const parsed = JSON.parse(data);
+        
+        if (parsed.id && parsed.commonName) {
+          const plant: Plant = parsed;
+          const instanceId = `${plant.id}-${Date.now()}`;
+          addPlant({
+            ...plant,
+            instanceId,
+            position: { x, y },
+            rotation: 0,
+            scale: 1,
+          });
+          setSelectedElementId(instanceId);
+        } else if (parsed.type && parsed.width !== undefined) {
+          const obstacle: PlacedObstacle = parsed;
+          const instanceId = `${obstacle.type}-${Date.now()}`;
+          addObstacle({
+            ...obstacle,
+            instanceId,
+            x,
+            y,
+          });
+          setSelectedElementId(instanceId);
+        }
       } catch (err) {
-        console.error('Failed to parse dropped plant:', err);
+        console.error('Failed to parse dropped item:', err);
       }
     },
-    [zoom, panOffset, addPlant, setSelectedElementId]
+    [zoom, panOffset, addPlant, addObstacle, setSelectedElementId]
   );
 
   const handlePlantDragEnd = useCallback(
@@ -197,6 +215,22 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
       });
     },
     [zoom, panOffset, updatePlant]
+  );
+
+  const handleObstacleDragEnd = useCallback(
+    (instanceId: string) => (e: Konva.KonvaEventObject<DragEvent>) => {
+      const stage = stageRef.current;
+      if (!stage) return;
+
+      const node = e.target;
+      const scale = zoom;
+
+      updateObstacle(instanceId, {
+        x: (node.x() - panOffset.x) / scale,
+        y: (node.y() - panOffset.y) / scale,
+      });
+    },
+    [zoom, panOffset, updateObstacle]
   );
 
   const renderGrid = () => {
@@ -240,30 +274,28 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   };
 
   const renderTerrain = () => {
-    if (!terrain) return null;
+    if (!terrain && !gardenTerrain) return null;
 
-    const { type, position, size } = terrain;
+    const terrainShape = terrain;
+    const gardenProps = gardenTerrain;
 
-    if (type === 'rectangle') {
-      return (
-        <Rect
-          x={position.x}
-          y={position.y}
-          width={size.width}
-          height={size.height}
-          fill="#f5f5dc"
-          stroke="#8b7355"
-          strokeWidth={2}
-        />
-      );
+    let width = config.canvas.defaultWidth;
+    let height = config.canvas.defaultHeight;
+
+    if (gardenProps?.dimensions) {
+      width = gardenProps.dimensions.width;
+      height = gardenProps.dimensions.depth;
+    } else if (terrainShape?.size) {
+      width = terrainShape.size.width;
+      height = terrainShape.size.height;
     }
 
-    if (type === 'circle') {
+    if (terrainShape?.type === 'circle') {
       return (
         <Circle
-          x={position.x + size.width / 2}
-          y={position.y + size.height / 2}
-          radius={Math.min(size.width, size.height) / 2}
+          x={terrainShape.position.x + terrainShape.size.width / 2}
+          y={terrainShape.position.y + terrainShape.size.height / 2}
+          radius={Math.min(terrainShape.size.width, terrainShape.size.height) / 2}
           fill="#f5f5dc"
           stroke="#8b7355"
           strokeWidth={2}
@@ -271,7 +303,17 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
       );
     }
 
-    return null;
+    return (
+      <Rect
+        x={0}
+        y={0}
+        width={width}
+        height={height}
+        fill="#f5f5dc"
+        stroke="#8b7355"
+        strokeWidth={2}
+      />
+    );
   };
 
   const renderPlants = () => {
@@ -313,6 +355,81 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     return plantsLayer;
   };
 
+  const renderObstacles = () => {
+    return obstacles.map((obstacle) => {
+      const isSelected = selectedElementId === obstacle.instanceId;
+      const visual = OBSTACLE_VISUALS[obstacle.type];
+      
+      const x = obstacle.x * zoom + panOffset.x;
+      const y = obstacle.y * zoom + panOffset.y;
+      const width = obstacle.width * zoom;
+      const height = obstacle.height * zoom;
+
+      const commonProps = {
+        fill: isSelected ? visual.bgColor : visual.color,
+        stroke: isSelected ? '#FFB300' : visual.bgColor,
+        strokeWidth: isSelected ? 3 : 1,
+        opacity: 0.9,
+      };
+
+      let shape;
+      if (visual.shape === 'circle') {
+        shape = (
+          <Circle
+            x={x + width / 2}
+            y={y + height / 2}
+            radius={Math.min(width, height) / 2}
+            {...commonProps}
+          />
+        );
+      } else if (visual.shape === 'ellipse') {
+        shape = (
+          <Ellipse
+            x={x + width / 2}
+            y={y + height / 2}
+            radiusX={width / 2}
+            radiusY={height / 2}
+            {...commonProps}
+          />
+        );
+      } else {
+        shape = (
+          <Rect
+            x={x}
+            y={y}
+            width={width}
+            height={height}
+            {...commonProps}
+          />
+        );
+      }
+
+      return (
+        <Group
+          key={obstacle.instanceId}
+          x={x}
+          y={y}
+          rotation={obstacle.rotation}
+          draggable={tool === 'select'}
+          onClick={() => setSelectedElementId(obstacle.instanceId)}
+          onTap={() => setSelectedElementId(obstacle.instanceId)}
+          onDragEnd={handleObstacleDragEnd(obstacle.instanceId)}
+        >
+          {shape}
+          {obstacle.label && (
+            <Text
+              text={obstacle.label}
+              fontSize={10}
+              fill="#2C2C2C"
+              offsetX={20}
+              offsetY={height + 5}
+            />
+          )}
+        </Group>
+      );
+    });
+  };
+
   const getCursor = () => {
     if (isPanning || isSpacePressed || tool === 'pan') return 'grab';
     if (tool === 'select') return 'default';
@@ -344,6 +461,7 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
         <Layer>
           {renderGrid()}
           {renderTerrain()}
+          {renderObstacles()}
           {renderPlants()}
         </Layer>
       </Stage>

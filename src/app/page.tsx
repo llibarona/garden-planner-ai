@@ -4,6 +4,7 @@ import { useGardenStore } from '@/stores/gardenStore';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { GardenCanvas } from '@/components/canvas/GardenCanvas';
 import { PlantLibrary } from '@/components/sidebar/PlantLibrary';
+import { ObstacleLibrary } from '@/components/sidebar/ObstacleLibrary';
 import { PlantDetailModal } from '@/components/ui/PlantDetailModal';
 import { useState } from 'react';
 import type { Plant } from '@/types';
@@ -45,6 +46,9 @@ export default function Home() {
           </div>
           <div className="flex-1 overflow-hidden">
             <PlantLibrary />
+          </div>
+          <div className="p-4 border-t border-gray-200">
+            <ObstacleLibrary />
           </div>
           <div className="p-4 border-t border-gray-200">
             <h2 className="font-semibold text-[var(--text-primary)] mb-2">Layers</h2>

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Tool, Layer, LayerType, PlacedPlant, TerrainShape } from '@/types';
+import type { Tool, Layer, LayerType, PlacedPlant, TerrainShape, PlacedObstacle } from '@/types';
 
 interface CanvasStore {
   tool: Tool;
@@ -9,6 +9,7 @@ interface CanvasStore {
   layers: Layer[];
   plants: PlacedPlant[];
   terrain: TerrainShape | null;
+  obstacles: PlacedObstacle[];
   setTool: (tool: Tool) => void;
   setZoom: (zoom: number) => void;
   setPanOffset: (offset: { x: number; y: number }) => void;
@@ -20,6 +21,10 @@ interface CanvasStore {
   updatePlant: (id: string, updates: Partial<PlacedPlant>) => void;
   duplicatePlant: (id: string, offset?: { x: number; y: number }) => string | null;
   setTerrain: (terrain: TerrainShape | null) => void;
+  addObstacle: (obstacle: PlacedObstacle) => void;
+  removeObstacle: (id: string) => void;
+  updateObstacle: (id: string, updates: Partial<PlacedObstacle>) => void;
+  duplicateObstacle: (id: string, offset?: { x: number; y: number }) => string | null;
 }
 
 const defaultLayers: Layer[] = [
@@ -38,6 +43,7 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
   layers: defaultLayers,
   plants: [],
   terrain: null,
+  obstacles: [],
   setTool: (tool) => set({ tool }),
   setZoom: (zoom) => set({ zoom: Math.max(0.25, Math.min(4, zoom)) }),
   setPanOffset: (offset) => set({ panOffset: offset }),
@@ -83,6 +89,37 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
 
       return {
         plants: [...state.plants, newPlant],
+        selectedElementId: newInstanceId,
+      };
+    });
+    return newInstanceId;
+  },
+  addObstacle: (obstacle) =>
+    set((state) => ({ obstacles: [...state.obstacles, obstacle] })),
+  removeObstacle: (id) =>
+    set((state) => ({ obstacles: state.obstacles.filter((o) => o.instanceId !== id) })),
+  updateObstacle: (id, updates) =>
+    set((state) => ({
+      obstacles: state.obstacles.map((o) =>
+        o.instanceId === id ? { ...o, ...updates } : o
+      ),
+    })),
+  duplicateObstacle: (id, offset = { x: 30, y: 30 }) => {
+    let newInstanceId: string | null = null;
+    set((state) => {
+      const obstacle = state.obstacles.find((o) => o.instanceId === id);
+      if (!obstacle) return state;
+
+      newInstanceId = `${obstacle.type}-${Date.now()}`;
+      const newObstacle: PlacedObstacle = {
+        ...obstacle,
+        instanceId: newInstanceId,
+        x: obstacle.x + offset.x,
+        y: obstacle.y + offset.y,
+      };
+
+      return {
+        obstacles: [...state.obstacles, newObstacle],
         selectedElementId: newInstanceId,
       };
     });
