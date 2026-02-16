@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePlantStore } from '@/stores/plantStore';
 import { PlantForm } from '@/components/sidebar/PlantForm';
-import type { Plant, PlantCategory } from '@/types';
+import type { Plant } from '@/types';
+import { PLANT_CATEGORIES } from '@/data/constants';
 
 type ViewMode = 'list' | 'create' | 'edit';
 
@@ -13,7 +14,7 @@ export function PlantManagerClient() {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<PlantCategory | ''>('');
+  const [categoryFilter, setCategoryFilter] = useState<typeof PLANT_CATEGORIES[number] | ''>('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const filteredPlants = plants.filter((plant) => {
@@ -45,12 +46,11 @@ export function PlantManagerClient() {
     setConfirmDelete(null);
   };
 
-  const categories: PlantCategory[] = ['tree', 'shrub', 'flower', 'vegetable', 'herb', 'grass', 'succulent', 'vine', 'fern', 'palm'];
   const totalPlants = plants.length;
-  const categoryCount = categories.reduce((acc, cat) => {
+  const categoryCount = PLANT_CATEGORIES.reduce((acc, cat) => {
     acc[cat] = plants.filter(p => p.category === cat).length;
     return acc;
-  }, {} as Record<PlantCategory, number>);
+  }, {} as Record<typeof PLANT_CATEGORIES[number], number>);
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
@@ -70,7 +70,7 @@ export function PlantManagerClient() {
         {viewMode === 'list' && (
           <>
             <div className="mb-6 grid grid-cols-5 gap-4">
-              {categories.map((cat) => (
+              {PLANT_CATEGORIES.map((cat) => (
                 <div key={cat} className="bg-white p-4 rounded-lg border border-gray-200">
                   <p className="text-2xl font-bold text-[var(--primary)]">{categoryCount[cat] || 0}</p>
                   <p className="text-sm text-[var(--text-secondary)] capitalize">{cat}</p>
@@ -90,11 +90,11 @@ export function PlantManagerClient() {
                   />
                   <select
                     value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value as PlantCategory | '')}
+                    onChange={(e) => setCategoryFilter(e.target.value as typeof PLANT_CATEGORIES[number] | '')}
                     className="px-3 py-2 border border-gray-300 rounded-md text-sm"
                   >
                     <option value="">All Categories</option>
-                    {categories.map((cat) => (
+                    {PLANT_CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
                     ))}
                   </select>

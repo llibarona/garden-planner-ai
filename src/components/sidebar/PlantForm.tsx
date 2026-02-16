@@ -1,18 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import type { 
-  Plant, 
-  PlantCategory, 
-  Sunlight, 
-  WaterNeeds, 
-  GrowthRate,
-  PlantRegion,
-  SoilType,
-  Season,
-  AdditionalInfo
-} from '@/types';
+import type { Plant, AdditionalInfo } from '@/types';
 import { cn } from '@/lib/utils';
+import {
+  PLANT_CATEGORIES,
+  SUNLIGHT_OPTIONS,
+  WATER_NEEDS_OPTIONS,
+  GROWTH_RATE_OPTIONS,
+  PLANT_REGIONS,
+  SOIL_TYPES,
+  SEASONS,
+} from '@/data/constants';
 
 interface PlantFormProps {
   plant?: Plant | null;
@@ -20,14 +19,6 @@ interface PlantFormProps {
   onCancel: () => void;
   className?: string;
 }
-
-const categories: PlantCategory[] = ['tree', 'shrub', 'flower', 'vegetable', 'herb', 'grass', 'succulent', 'vine', 'fern', 'palm'];
-const sunlightOptions: Sunlight[] = ['full-sun', 'partial-shade', 'shade'];
-const waterOptions: WaterNeeds[] = ['low', 'medium', 'high'];
-const growthOptions: GrowthRate[] = ['slow', 'medium', 'fast'];
-const regions: PlantRegion[] = ['europe', 'north-america', 'south-america', 'africa', 'asia', 'oceania', 'mediterranean', 'tropical', 'worldwide'];
-const soilTypes: SoilType[] = ['clay', 'sandy', 'loamy', 'chalky', 'peaty', 'silty'];
-const seasons: Season[] = ['spring', 'summer', 'autumn', 'winter'];
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 11);
@@ -200,10 +191,10 @@ export function PlantForm({ plant, onSave, onCancel, className }: PlantFormProps
           <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Category *</label>
           <select
             value={formData.category}
-            onChange={(e) => handleChange('category', e.target.value as PlantCategory)}
+            onChange={(e) => handleChange('category', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
           >
-            {categories.map((cat) => (
+            {PLANT_CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
             ))}
           </select>
@@ -212,10 +203,10 @@ export function PlantForm({ plant, onSave, onCancel, className }: PlantFormProps
           <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Growth Rate</label>
           <select
             value={formData.growthRate}
-            onChange={(e) => handleChange('growthRate', e.target.value as GrowthRate)}
+            onChange={(e) => handleChange('growthRate', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
           >
-            {growthOptions.map((opt) => (
+            {GROWTH_RATE_OPTIONS.map((opt) => (
               <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
             ))}
           </select>
@@ -224,10 +215,10 @@ export function PlantForm({ plant, onSave, onCancel, className }: PlantFormProps
           <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Sunlight</label>
           <select
             value={formData.sunlight}
-            onChange={(e) => handleChange('sunlight', e.target.value as Sunlight)}
+            onChange={(e) => handleChange('sunlight', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
           >
-            {sunlightOptions.map((opt) => (
+            {SUNLIGHT_OPTIONS.map((opt) => (
               <option key={opt} value={opt}>{opt.replace('-', ' ')}</option>
             ))}
           </select>
@@ -236,10 +227,10 @@ export function PlantForm({ plant, onSave, onCancel, className }: PlantFormProps
           <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Water Needs</label>
           <select
             value={formData.water?.needs}
-            onChange={(e) => handleNestedChange('water', 'needs', e.target.value as WaterNeeds)}
+            onChange={(e) => handleNestedChange('water', 'needs', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
           >
-            {waterOptions.map((opt) => (
+            {WATER_NEEDS_OPTIONS.map((opt) => (
               <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
             ))}
           </select>
@@ -302,10 +293,10 @@ export function PlantForm({ plant, onSave, onCancel, className }: PlantFormProps
           <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Soil Type</label>
           <select
             value={formData.soil?.type}
-            onChange={(e) => handleNestedChange('soil', 'type', e.target.value as SoilType)}
+            onChange={(e) => handleNestedChange('soil', 'type', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
           >
-            {soilTypes.map((opt) => (
+            {SOIL_TYPES.map((opt) => (
               <option key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
             ))}
           </select>
@@ -335,7 +326,7 @@ export function PlantForm({ plant, onSave, onCancel, className }: PlantFormProps
       <div>
         <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Regions</label>
         <div className="flex flex-wrap gap-2">
-          {regions.map((region) => (
+          {PLANT_REGIONS.map((region) => (
             <button
               key={region}
               type="button"
@@ -356,7 +347,7 @@ export function PlantForm({ plant, onSave, onCancel, className }: PlantFormProps
       <div>
         <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">Bloom Season</label>
         <div className="flex flex-wrap gap-2">
-          {seasons.map((season) => (
+          {SEASONS.map((season) => (
             <button
               key={season}
               type="button"
