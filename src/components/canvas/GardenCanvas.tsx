@@ -205,7 +205,6 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   });
 
   const renderObstacles = () => {
-    console.log('terrainX:', terrainX, 'terrainY:', terrainY, 'scaledScale:', scaledScale, 'pan:', pan);
     return obstacles.map((obstacle) => {
       const isSelected = selectedElementId === obstacle.instanceId;
       const visual = OBSTACLE_VISUALS[obstacle.type];
@@ -213,8 +212,6 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
       const y = toStageY(obstacle.y);
       const w = obstacle.width * scaledScale;
       const h = obstacle.height * scaledScale;
-
-      console.log('Obstacle:', obstacle.type, 'x:', obstacle.x, 'y:', obstacle.y, 'render x:', x, 'y:', y, 'w:', w, 'h:', h);
 
       const props = { 
         fill: isSelected ? visual.bgColor : visual.color,
