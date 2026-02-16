@@ -5,6 +5,7 @@ import { plants } from '@/data/plants';
 import type { Plant, PlantFilters } from '@/types';
 import { cn } from '@/lib/utils';
 import { PLANT_CATEGORIES, SUNLIGHT_OPTIONS, WATER_NEEDS_OPTIONS, GROWTH_RATE_OPTIONS } from '@/data/constants';
+import { PlantDetailModal } from '@/components/ui/PlantDetailModal';
 
 interface PlantLibraryProps {
   className?: string;
@@ -14,6 +15,7 @@ interface PlantLibraryProps {
 export function PlantLibrary({ className, onDragStart }: PlantLibraryProps) {
   const [filters, setFilters] = useState<PlantFilters>({});
   const [search, setSearch] = useState('');
+  const [detailPlant, setDetailPlant] = useState<Plant | null>(null);
 
   const filteredPlants = useMemo(() => {
     return plants.filter((plant) => {
@@ -177,16 +179,29 @@ export function PlantLibrary({ className, onDragStart }: PlantLibraryProps) {
               key={plant.id}
               draggable
               onDragStart={(e) => handleDragStart(e, plant)}
-              className="p-3 bg-white border border-gray-200 rounded-lg cursor-grab hover:border-[var(--primary)] hover:shadow-sm transition-all"
+              className="p-3 bg-white border border-gray-200 rounded-lg cursor-grab hover:border-[var(--primary)] hover:shadow-sm transition-all group"
             >
               <div className="flex items-center gap-2 mb-1">
                 <div
                   className="w-6 h-6 rounded-full flex-shrink-0"
                   style={{ backgroundColor: plant.iconColor || '#2D5A27' }}
                 />
-                <span className="font-medium text-sm text-[var(--text-primary)] truncate">
+                <span className="font-medium text-sm text-[var(--text-primary)] truncate flex-1">
                   {plant.commonName}
                 </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDetailPlant(plant);
+                  }}
+                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded"
+                  title="View details"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
+                  </svg>
+                </button>
               </div>
               <p className="text-xs text-[var(--text-secondary)] italic truncate">
                 {plant.scientificName}
@@ -218,6 +233,10 @@ export function PlantLibrary({ className, onDragStart }: PlantLibraryProps) {
           </div>
         )}
       </div>
+
+      {detailPlant && (
+        <PlantDetailModal plant={detailPlant} onClose={() => setDetailPlant(null)} />
+      )}
     </div>
   );
 }
