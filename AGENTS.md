@@ -184,3 +184,52 @@ src/
 
 - **SPEC.md** - Technical specification
 - Update docs when interfaces change
+
+---
+
+## Next Steps (Planned Features)
+
+### Canvas Tools
+- [ ] Plant manipulation (select, move, resize, rotate)
+- [ ] Delete plants from canvas (keyboard shortcut + button)
+- [ ] Multi-select plants
+- [ ] Undo/redo functionality
+- [ ] Copy/paste plants
+
+### Terrain
+- [ ] Add terrain creation tools (rectangle, circle)
+- [ ] Edit terrain shape and size
+- [ ] Multiple terrain shapes per garden
+
+### Plant Library
+- [ ] CRUD operations for plants (create, read, update, delete)
+- [ ] Import/export plant database
+- [ ] More filter options (soil type, hardiness zone, region)
+- [ ] Plant images support
+
+### Properties Panel
+- [ ] Show selected plant properties
+- [ ] Edit plant position, rotation, scale
+- [ ] Edit plant-specific settings
+
+### Validation
+- [ ] AI-powered plant placement validation
+- [ ] Companion plant suggestions
+- [ ] Incompatible plant warnings
+- [ ] Climate/soil compatibility checks
+
+### Persistence
+- [ ] Save garden to localStorage
+- [ ] Export garden as JSON
+- [ ] Export canvas as PNG/PDF
+
+### Layers
+- [ ] Layer visibility toggles
+- [ ] Layer reordering
+- [ ] Layer locking
+
+### UI/UX
+- [ ] Tool picker sidebar
+- [ ] Keyboard shortcuts
+- [ ] Context menu (right-click)
+- [ ] Responsive design for tablet

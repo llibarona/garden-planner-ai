@@ -6,6 +6,7 @@ import type Konva from 'konva';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { useConfigStore } from '@/stores/configStore';
 import { cn } from '@/lib/utils';
+import type { Plant } from '@/types';
 
 interface GardenCanvasProps {
   className?: string;
@@ -29,6 +30,7 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     setPanOffset,
     setSelectedElementId,
     updatePlant,
+    addPlant,
   } = useCanvasStore();
 
   const { config } = useConfigStore();
@@ -136,6 +138,44 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   const handleMouseUp = useCallback(() => {
     setIsPanning(false);
   }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      const data = e.dataTransfer.getData('application/json');
+      if (!data) return;
+
+      try {
+        const plant: Plant = JSON.parse(data);
+        const stage = stageRef.current;
+        if (!stage) return;
+
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+
+        const x = (e.clientX - rect.left - panOffset.x) / zoom;
+        const y = (e.clientY - rect.top - panOffset.y) / zoom;
+
+        const instanceId = `${plant.id}-${Date.now()}`;
+        addPlant({
+          ...plant,
+          instanceId,
+          position: { x, y },
+          rotation: 0,
+          scale: 1,
+        });
+        setSelectedElementId(instanceId);
+      } catch (err) {
+        console.error('Failed to parse dropped plant:', err);
+      }
+    },
+    [zoom, panOffset, addPlant, setSelectedElementId]
+  );
 
   const handlePlantDragEnd = useCallback(
     (instanceId: string) => (e: Konva.KonvaEventObject<DragEvent>) => {
@@ -280,6 +320,8 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
       ref={containerRef}
       className={cn('relative bg-gray-100 overflow-hidden', className)}
       style={{ cursor: getCursor() }}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     >
       <Stage
         ref={stageRef}
