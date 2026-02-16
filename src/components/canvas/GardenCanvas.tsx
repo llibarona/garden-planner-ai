@@ -190,7 +190,9 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
 
   const renderPlants = () => plants.map((plant) => {
     const isSelected = selectedElementId === plant.instanceId;
-    const size = plant.size.width * plant.scale * scaledScale;
+    const sizeCm = plant.size.width * plant.scale;
+    const sizeM = sizeCm / 100; // convert cm to meters
+    const size = sizeM * scaledScale;
     const x = toStageX(plant.position.x);
     const y = toStageY(plant.position.y);
 
