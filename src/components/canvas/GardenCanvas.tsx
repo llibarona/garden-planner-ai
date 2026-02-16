@@ -134,14 +134,14 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
         const instanceId = `${plant.id}-${Date.now()}`;
         addPlant({ ...plant, instanceId, position: { x, y }, rotation: 0, scale: 1 });
         setSelectedElementId(instanceId);
-      } else if (parsed.type && parsed.width !== undefined) {
+      } else if (parsed.type) {
         const obstacle: PlacedObstacle = parsed;
         const instanceId = `${obstacle.type}-${Date.now()}`;
         addObstacle({ ...obstacle, instanceId, x, y });
         setSelectedElementId(instanceId);
       }
     } catch (err) {
-      console.error('Failed to parse dropped item:', err);
+      console.error('Failed to parse dropped item:', err, data);
     }
   }, [terrainX, terrainY, pan, scaledScale, terrainWidth, terrainHeight, addPlant, addObstacle, setSelectedElementId]);
 
