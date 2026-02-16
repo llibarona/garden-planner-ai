@@ -41,8 +41,8 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   const { terrain: gardenTerrain } = useGardenStore();
   const { config } = useConfigStore();
 
-  const terrainWidth = gardenTerrain?.dimensions?.width ?? config.canvas.defaultWidth;
-  const terrainHeight = gardenTerrain?.dimensions?.depth ?? config.canvas.defaultHeight;
+  const terrainWidth = gardenTerrain?.dimensions?.width ?? 20;
+  const terrainHeight = gardenTerrain?.dimensions?.depth ?? 20;
 
   const baseScale = useMemo(() => {
     const padding = 80;
