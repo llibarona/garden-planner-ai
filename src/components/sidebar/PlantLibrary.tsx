@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import { plants } from '@/data/plants';
-import type { Plant, PlantFilters, PlantCategory, Sunlight, WaterNeeds, GrowthRate } from '@/types';
+import type { Plant, PlantFilters } from '@/types';
 import { cn } from '@/lib/utils';
+import { PLANT_CATEGORIES, SUNLIGHT_OPTIONS, WATER_NEEDS_OPTIONS, GROWTH_RATE_OPTIONS } from '@/data/constants';
 
 interface PlantLibraryProps {
   className?: string;
@@ -65,10 +66,10 @@ export function PlantLibrary({ className, onDragStart }: PlantLibraryProps) {
     onDragStart?.(plant);
   };
 
-  const categories: PlantCategory[] = ['tree', 'shrub', 'flower', 'vegetable', 'herb', 'grass', 'succulent', 'vine', 'fern', 'palm'];
-  const sunlightOptions: Sunlight[] = ['full-sun', 'partial-shade', 'shade'];
-  const waterOptions: WaterNeeds[] = ['low', 'medium', 'high'];
-  const growthOptions: GrowthRate[] = ['slow', 'medium', 'fast'];
+  const categories: typeof PLANT_CATEGORIES = PLANT_CATEGORIES;
+  const sunlightOptions = SUNLIGHT_OPTIONS;
+  const waterOptions = WATER_NEEDS_OPTIONS;
+  const growthOptions = GROWTH_RATE_OPTIONS;
 
   return (
     <div className={cn('flex flex-col h-full', className)}>
@@ -89,8 +90,8 @@ export function PlantLibrary({ className, onDragStart }: PlantLibraryProps) {
             multiple
             value={filters.category || []}
             onChange={(e) => {
-              const values = Array.from(e.target.selectedOptions, (option) => option.value as PlantCategory);
-              setFilters((prev) => ({ ...prev, category: values.length ? values : undefined }));
+              const values = Array.from(e.target.selectedOptions, (option) => option.value);
+              setFilters((prev) => ({ ...prev, category: values.length ? values as typeof PLANT_CATEGORIES : undefined }));
             }}
             className="w-full px-2 py-1 border border-gray-300 rounded text-sm h-20"
           >
@@ -108,8 +109,8 @@ export function PlantLibrary({ className, onDragStart }: PlantLibraryProps) {
             <select
               value={filters.sunlight?.[0] || ''}
               onChange={(e) => {
-                const value = e.target.value as Sunlight | '';
-                setFilters((prev) => ({ ...prev, sunlight: value ? [value] : undefined }));
+                const value = e.target.value;
+                setFilters((prev) => ({ ...prev, sunlight: value ? [value as typeof SUNLIGHT_OPTIONS[number]] : undefined }));
               }}
               className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
             >
@@ -125,8 +126,8 @@ export function PlantLibrary({ className, onDragStart }: PlantLibraryProps) {
             <select
               value={filters.waterNeeds?.[0] || ''}
               onChange={(e) => {
-                const value = e.target.value as WaterNeeds | '';
-                setFilters((prev) => ({ ...prev, waterNeeds: value ? [value] : undefined }));
+                const value = e.target.value;
+                setFilters((prev) => ({ ...prev, waterNeeds: value ? [value as typeof WATER_NEEDS_OPTIONS[number]] : undefined }));
               }}
               className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
             >
@@ -142,8 +143,8 @@ export function PlantLibrary({ className, onDragStart }: PlantLibraryProps) {
             <select
               value={filters.growthRate?.[0] || ''}
               onChange={(e) => {
-                const value = e.target.value as GrowthRate | '';
-                setFilters((prev) => ({ ...prev, growthRate: value ? [value] : undefined }));
+                const value = e.target.value;
+                setFilters((prev) => ({ ...prev, growthRate: value ? [value as typeof GROWTH_RATE_OPTIONS[number]] : undefined }));
               }}
               className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
             >
