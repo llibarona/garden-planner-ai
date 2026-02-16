@@ -204,38 +204,41 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     );
   });
 
-  const renderObstacles = () => obstacles.map((obstacle) => {
-    const isSelected = selectedElementId === obstacle.instanceId;
-    const visual = OBSTACLE_VISUALS[obstacle.type];
-    const x = toStageX(obstacle.x);
-    const y = toStageY(obstacle.y);
-    const w = obstacle.width * scaledScale;
-    const h = obstacle.height * scaledScale;
+  const renderObstacles = () => {
+    console.log('Rendering obstacles:', obstacles);
+    return obstacles.map((obstacle) => {
+      const isSelected = selectedElementId === obstacle.instanceId;
+      const visual = OBSTACLE_VISUALS[obstacle.type];
+      const x = toStageX(obstacle.x);
+      const y = toStageY(obstacle.y);
+      const w = obstacle.width * scaledScale;
+      const h = obstacle.height * scaledScale;
 
-    const props = { 
-      fill: isSelected ? visual.bgColor : visual.color,
-      stroke: isSelected ? '#FFB300' : '#000000', 
-      strokeWidth: isSelected ? 3 : 1, 
-      opacity: 1 as const 
-    };
+      const props = { 
+        fill: isSelected ? visual.bgColor : visual.color,
+        stroke: isSelected ? '#FFB300' : '#000000', 
+        strokeWidth: isSelected ? 3 : 1, 
+        opacity: 1 as const 
+      };
 
-    const shape = visual.shape === 'circle' ? <Circle x={x + w/2} y={y + h/2} radius={Math.min(w, h)/2} {...props} />
-      : visual.shape === 'ellipse' ? <Ellipse x={x + w/2} y={y + h/2} radiusX={w/2} radiusY={h/2} {...props} />
-      : <Rect x={x} y={y} width={w} height={h} {...props} />;
+      const shape = visual.shape === 'circle' ? <Circle x={x + w/2} y={y + h/2} radius={Math.min(w, h)/2} {...props} />
+        : visual.shape === 'ellipse' ? <Ellipse x={x + w/2} y={y + h/2} radiusX={w/2} radiusY={h/2} {...props} />
+        : <Rect x={x} y={y} width={w} height={h} {...props} />;
 
-    return (
-      <Group key={obstacle.instanceId} x={x} y={y} rotation={obstacle.rotation} draggable={tool === 'select'}
-        onClick={() => setSelectedElementId(obstacle.instanceId)} onDragEnd={handleObstacleDragEnd(obstacle.instanceId)}>
-        {shape}
-      </Group>
-    );
-  });
+      return (
+        <Group key={obstacle.instanceId} x={x} y={y} rotation={obstacle.rotation} draggable={tool === 'select'}
+          onClick={() => setSelectedElementId(obstacle.instanceId)} onDragEnd={handleObstacleDragEnd(obstacle.instanceId)}>
+          {shape}
+        </Group>
+      );
+    });
+  };
 
   return (
     <div ref={containerRef} className={cn('relative bg-gray-100 overflow-hidden', className)}
       style={{ cursor: isPanning ? 'grabbing' : 'default' }} onDragOver={handleDragOver} onDrop={handleDrop}>
       <Stage ref={stageRef} width={dimensions.width} height={dimensions.height} onWheel={handleWheel}>
-        <Layer>{renderGrid()}{renderTerrain()}{renderObstacles()}{renderPlants()}</Layer>
+        <Layer>{renderTerrain()}{renderGrid()}{renderPlants()}{renderObstacles()}</Layer>
       </Stage>
       <PlantSelectionToolbar onShowDetail={setDetailPlant} />
       <PlantTransformControls />
