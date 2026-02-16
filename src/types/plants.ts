@@ -1,21 +1,21 @@
 export type PlantCategory = 
-  | 'tree' 
+  | 'canopy' 
+  | 'sub-canopy' 
   | 'shrub' 
-  | 'flower' 
-  | 'vegetable' 
-  | 'herb' 
-  | 'grass' 
-  | 'succulent'
-  | 'vine'
-  | 'fern'
-  | 'palm';
+  | 'herbaceous' 
+  | 'groundcover' 
+  | 'climber'
+  | 'root'
+  | 'fungi';
+
+export type PlantLifecycle = 'annual' | 'biennial' | 'perennial' | 'ephemeral';
 
 export type Sunlight = 'full-sun' | 'partial-shade' | 'shade';
 export type WaterNeeds = 'low' | 'medium' | 'high';
 export type GrowthRate = 'slow' | 'medium' | 'fast';
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 
-export type SoilType = 'clay' | 'sandy' | 'loamy' | 'chalky' | 'peaty' | 'silty';
+export type SoilType = 'clay' | 'sandy' | 'loamy' | 'chalky' | 'peaty' | 'silty' | 'acidic';
 export type Drainage = 'poor' | 'moderate' | 'good' | 'excellent';
 export type SunExposure = 'sun' | 'shade';
 
@@ -94,6 +94,7 @@ export interface Plant {
   
   // Category & Classification
   category: PlantCategory;
+  lifecycle?: PlantLifecycle;
   regions: PlantRegion[];
   isNative?: boolean;
   isInvasive?: boolean;
@@ -253,4 +254,5 @@ export interface PlantFilters {
   hardinessZone?: number;
   growthRate?: GrowthRate[];
   season?: Season[];
+  lifecycle?: PlantLifecycle[];
 }
