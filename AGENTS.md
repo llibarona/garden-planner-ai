@@ -133,22 +133,32 @@ try {
 
 ## Git Workflow
 
+### Agent Rules
+**ALWAYS use feature branches for new work:**
+- Create a branch from `main` before starting any task
+- Branch naming: `feature/` for features, `bugfix/` for fixes, `refactor/` for refactoring
+- Commit changes and push the branch
+- Create a PR to `main` when complete
+- **NEVER commit directly to main**
+
 ### Branching
-- `main` - Production-ready
-- `feature/` - New features
-- `bugfix/` - Bug fixes
-- `refactor/` - Refactoring
+- `main` - Production-ready (never commit directly)
+- `feature/` - New features (e.g., `feature/plant-library`)
+- `bugfix/` - Bug fixes (e.g., `bugfix/canvas-zoom`)
+- `refactor/` - Refactoring (e.g., `refactor/stores`)
 
 ### Process
-1. Create branch: `git checkout -b feature/your-feature`
-2. Make changes and commit
-3. Push and create PR
+1. Pull latest main: `git checkout main && git pull`
+2. Create branch: `git checkout -b feature/your-feature`
+3. Make changes and commit
+4. Push: `git push -u origin feature/your-feature`
+5. Create PR to main
 
 ### Validation Required
-Before reporting completion:
+Before creating PR:
 - Run `npm run lint`
 - Run `npx tsc --noEmit`
-- Ensure build succeeds
+- Ensure build succeeds: `npm run build`
 
 ---
 
