@@ -7,6 +7,9 @@ import { useCanvasStore } from '@/stores/canvasStore';
 import { useConfigStore } from '@/stores/configStore';
 import { cn } from '@/lib/utils';
 import type { Plant } from '@/types';
+import { PlantSelectionToolbar } from './PlantSelectionToolbar';
+import { PlantTransformControls } from './PlantTransformControls';
+import { PlantDetailModal } from '@/components/ui/PlantDetailModal';
 
 interface GardenCanvasProps {
   className?: string;
@@ -18,6 +21,7 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
+  const [detailPlant, setDetailPlant] = useState<Plant | null>(null);
 
   const {
     tool,
@@ -344,6 +348,9 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
         </Layer>
       </Stage>
 
+      <PlantSelectionToolbar onShowDetail={setDetailPlant} />
+      <PlantTransformControls />
+
       <div className="absolute bottom-4 left-4 flex flex-col gap-2">
         <div className="flex flex-col bg-white rounded-lg shadow-md">
           <button
@@ -376,6 +383,10 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
       <div className="absolute bottom-4 right-4 bg-white px-3 py-1 rounded shadow-md text-sm text-gray-600">
         {Math.round(zoom * 100)}%
       </div>
+
+      {detailPlant && (
+        <PlantDetailModal plant={detailPlant} onClose={() => setDetailPlant(null)} />
+      )}
     </div>
   );
 }
