@@ -2,10 +2,11 @@
 
 import { useGardenStore } from '@/stores/gardenStore';
 import { useCanvasStore } from '@/stores/canvasStore';
+import { GardenCanvas } from '@/components/canvas/GardenCanvas';
 
 export default function Home() {
   const { gardenName, context } = useGardenStore();
-  const { tool, zoom, plants, terrain } = useCanvasStore();
+  const { zoom } = useCanvasStore();
 
   return (
     <div className="flex flex-col h-screen bg-[var(--background)]">
@@ -39,18 +40,8 @@ export default function Home() {
           </div>
         </aside>
 
-        <main className="flex-1 bg-gray-100 relative overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-[var(--text-secondary)]">
-              <p className="text-lg">Canvas Area</p>
-              <p className="text-sm mt-2">
-                Tool: {tool} | Zoom: {Math.round(zoom * 100)}% | Plants: {plants.length}
-              </p>
-              {terrain && (
-                <p className="text-sm mt-1">Terrain: {terrain.type}</p>
-              )}
-            </div>
-          </div>
+        <main className="flex-1 relative overflow-hidden">
+          <GardenCanvas />
         </main>
 
         <aside className="w-80 bg-[var(--surface)] border-l border-gray-200 flex flex-col">
