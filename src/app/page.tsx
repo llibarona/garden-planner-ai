@@ -3,6 +3,7 @@
 import { useGardenStore } from '@/stores/gardenStore';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { GardenCanvas } from '@/components/canvas/GardenCanvas';
+import { PlantLibrary } from '@/components/sidebar/PlantLibrary';
 
 export default function Home() {
   const { gardenName, context } = useGardenStore();
@@ -33,7 +34,9 @@ export default function Home() {
           </div>
           <div className="p-4 border-b border-gray-200">
             <h2 className="font-semibold text-[var(--text-primary)]">Plants</h2>
-            <p className="text-sm text-[var(--text-secondary)] mt-2">Plant library coming soon...</p>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <PlantLibrary />
           </div>
           <div className="p-4 flex-1">
             <h2 className="font-semibold text-[var(--text-primary)]">Layers</h2>
