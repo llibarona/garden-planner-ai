@@ -18,6 +18,7 @@ interface CanvasStore {
   addPlant: (plant: PlacedPlant) => void;
   removePlant: (id: string) => void;
   updatePlant: (id: string, updates: Partial<PlacedPlant>) => void;
+  duplicatePlant: (id: string, offset?: { x: number; y: number }) => string | null;
   setTerrain: (terrain: TerrainShape | null) => void;
 }
 
@@ -64,4 +65,27 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
       ),
     })),
   setTerrain: (terrain) => set({ terrain }),
+  duplicatePlant: (id, offset = { x: 30, y: 30 }) => {
+    let newInstanceId: string | null = null;
+    set((state) => {
+      const plant = state.plants.find((p) => p.instanceId === id);
+      if (!plant) return state;
+
+      newInstanceId = `${plant.id}-${Date.now()}`;
+      const newPlant: PlacedPlant = {
+        ...plant,
+        instanceId: newInstanceId,
+        position: {
+          x: plant.position.x + offset.x,
+          y: plant.position.y + offset.y,
+        },
+      };
+
+      return {
+        plants: [...state.plants, newPlant],
+        selectedElementId: newInstanceId,
+      };
+    });
+    return newInstanceId;
+  },
 }));
