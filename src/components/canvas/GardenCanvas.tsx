@@ -21,6 +21,7 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   const stageRef = useRef<Konva.Stage>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const [zoom, setZoom] = useState(1);
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [detailPlant, setDetailPlant] = useState<Plant | null>(null);
@@ -43,7 +44,7 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   const terrainWidth = gardenTerrain?.dimensions?.width ?? config.canvas.defaultWidth;
   const terrainHeight = gardenTerrain?.dimensions?.depth ?? config.canvas.defaultHeight;
 
-  const scale = useMemo(() => {
+  const baseScale = useMemo(() => {
     const padding = 80;
     const availableWidth = dimensions.width - padding * 2;
     const availableHeight = dimensions.height - padding * 2;
@@ -52,8 +53,9 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     return Math.min(pixelsPerMeterX, pixelsPerMeterY, 20);
   }, [dimensions.width, dimensions.height, terrainWidth, terrainHeight]);
 
-  const offsetX = (dimensions.width - terrainWidth * scale) / 2;
-  const offsetY = (dimensions.height - terrainHeight * scale) / 2;
+  const scale = baseScale * zoom;
+  const offsetX = (dimensions.width - terrainWidth * baseScale) / 2;
+  const offsetY = (dimensions.height - terrainHeight * baseScale) / 2;
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -94,8 +96,12 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   const handleWheel = useCallback(
     (e: Konva.KonvaEventObject<WheelEvent>) => {
       e.evt.preventDefault();
+      const scaleBy = 1.1;
+      const direction = e.evt.deltaY > 0 ? -1 : 1;
+      const newZoom = direction > 0 ? zoom * scaleBy : zoom / scaleBy;
+      setZoom(Math.max(0.25, Math.min(4, newZoom)));
     },
-    []
+    [zoom]
   );
 
   const handleMouseDown = useCallback(
@@ -130,14 +136,11 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
       const rect = containerRef.current?.getBoundingClientRect();
       if (!rect) return;
 
-      const stage = stageRef.current;
-      if (!stage) return;
+      const clientX = e.clientX;
+      const clientY = e.clientY;
 
-      const stagePos = stage.getPointerPosition();
-      if (!stagePos) return;
-
-      const x = (stagePos.x - offsetX) / scale;
-      const y = (stagePos.y - offsetY) / scale;
+      const x = (clientX - rect.left - offsetX) / scale;
+      const y = (clientY - rect.top - offsetY) / scale;
 
       if (x < 0 || x > terrainWidth || y < 0 || y > terrainHeight) {
         return;
@@ -415,12 +418,32 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
       <PlantSelectionToolbar onShowDetail={setDetailPlant} />
       <PlantTransformControls />
 
-      <div className="absolute bottom-4 left-4 bg-white px-3 py-1 rounded shadow-md text-sm text-gray-600">
-        {terrainWidth}m x {terrainHeight}m
+      <div className="absolute bottom-4 left-4 flex gap-2">
+        <div className="bg-white px-3 py-1 rounded shadow-md text-sm text-gray-600">
+          {terrainWidth}m x {terrainHeight}m
+        </div>
       </div>
 
-      <div className="absolute bottom-4 right-4 bg-white px-3 py-1 rounded shadow-md text-sm text-gray-600">
-        1m = {Math.round(scale)}px
+      <div className="absolute bottom-4 right-4 flex items-center gap-2">
+        <div className="flex flex-col bg-white rounded-lg shadow-md">
+          <button
+            onClick={() => setZoom(z => Math.min(4, z * 1.2))}
+            className="px-3 py-2 hover:bg-gray-100 rounded-t-lg border-b border-gray-200"
+            title="Zoom In"
+          >
+            +
+          </button>
+          <button
+            onClick={() => setZoom(z => Math.max(0.25, z / 1.2))}
+            className="px-3 py-2 hover:bg-gray-100 rounded-b-lg"
+            title="Zoom Out"
+          >
+            −
+          </button>
+        </div>
+        <div className="bg-white px-3 py-1 rounded shadow-md text-sm text-gray-600">
+          {Math.round(zoom * 100)}%
+        </div>
       </div>
 
       {detailPlant && (
