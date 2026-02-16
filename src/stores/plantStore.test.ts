@@ -6,7 +6,7 @@ const mockPlant: Plant = {
   id: 'test-plant',
   commonName: 'Test Plant',
   scientificName: 'Plantus testus',
-  category: 'flower',
+  category: 'shrub',
   regions: ['europe'],
   size: { width: 50, height: 50, unit: 'cm' },
   growthRate: 'medium',

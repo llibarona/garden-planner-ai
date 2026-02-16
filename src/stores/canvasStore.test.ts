@@ -6,7 +6,7 @@ const mockPlacedPlant: PlacedPlant = {
   id: 'tomato',
   commonName: 'Tomato',
   scientificName: 'Solanum lycopersicum',
-  category: 'vegetable',
+  category: 'root',
   regions: ['europe'],
   size: { width: 60, height: 120, unit: 'cm' },
   growthRate: 'fast',
