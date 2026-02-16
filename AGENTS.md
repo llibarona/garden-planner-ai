@@ -238,11 +238,44 @@ This project uses the **Supervisor-Worker pattern** defined in `documentation/AI
 5. **Validate** (run lint/typecheck)
 6. **Report** completion
 
+---
+
+## Git Workflow
+
+### Branching Strategy
+- **main** - Production-ready code (protected)
+- **feature/** - New features (e.g., `feature/plant-drag-drop`)
+- **bugfix/** - Bug fixes (e.g., `bugfix/canvas-zoom`)
+- **refactor/** - Code refactoring
+
+### Feature Development Process
+1. Create a new branch from `main`:
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b feature/your-feature-name
+   ```
+
+2. Make changes and commit frequently:
+   ```bash
+   git add .
+   git commit -m "Description of changes"
+   ```
+
+3. Push branch and create PR:
+   ```bash
+   git push -u origin feature/your-feature-name
+   gh pr create --title "Feature: Your Feature" --body "Description"
+   ```
+
+4. **Wait for review** - Do not merge until approved
+
 ### Validation Required
 Before reporting completion:
 - Run `npm run lint`
 - Run `npm run typecheck`
 - Ensure all tests pass
+- Push branch and create PR for review
 
 ---
 
