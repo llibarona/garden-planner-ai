@@ -212,8 +212,12 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     const w = obstacle.width * scaledScale;
     const h = obstacle.height * scaledScale;
 
-    const props = { fill: isSelected ? visual.bgColor : visual.color,
-      stroke: isSelected ? '#FFB300' : visual.bgColor, strokeWidth: isSelected ? 3 : 1, opacity: 0.9 as const };
+    const props = { 
+      fill: isSelected ? visual.bgColor : visual.color,
+      stroke: isSelected ? '#FFB300' : '#000000', 
+      strokeWidth: isSelected ? 3 : 1, 
+      opacity: 1 as const 
+    };
 
     const shape = visual.shape === 'circle' ? <Circle x={x + w/2} y={y + h/2} radius={Math.min(w, h)/2} {...props} />
       : visual.shape === 'ellipse' ? <Ellipse x={x + w/2} y={y + h/2} radiusX={w/2} radiusY={h/2} {...props} />
