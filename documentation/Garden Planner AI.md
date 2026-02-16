@@ -1,47 +1,47 @@
-# **Garden Planner AI \- Documento Maestro de Proyecto**
+# **Garden Planner AI - Project Master Document**
 
-## **1\. Definición del Proyecto**
+## **1. Project Definition**
 
-**Descripción:** Herramienta de diseño y planificación de jardinería que integra un canvas visual (drag-and-drop) con inteligencia artificial para la validación técnica y sugerencias agronómicas. **Objetivo Principal:** Permitir que cualquier usuario, sin conocimientos avanzados, pueda diseñar un jardín viable, estético y sostenible.
-
----
-
-## **2\. Especificaciones Técnicas (MVP)**
-
-### **2.1. El Lienzo (Canvas)**
-
-* **Definición de terreno:** Input de medidas (largo/ancho) o dibujo de formas irregulares.  
-* **Capas de diseño:** Separación por niveles (Suelo, Plantas, Infraestructura como caminos/fuentes).  
-* **Interacción:** Sistema de arrastrar y soltar con escalado automático de objetos.
-
-### **2.2. Base de Datos de Plantas**
-
-* Fichas con: Nombre científico, requerimientos de luz (pleno sol, sombra), pH del suelo, necesidad de riego, tamaño máximo y zona de rusticidad.
+**Description:** Garden design and planning tool that integrates a visual canvas (drag-and-drop) with artificial intelligence for technical validation and agronomic recommendations. 
+**Main Objective:** Enable any user, without advanced knowledge, to design a viable, aesthetic, and sustainable garden.
 
 ---
 
-## **3\. Funcionalidades Avanzadas (Diferenciales)**
+## **2. Technical Specifications (MVP)**
 
-### **3.1. Integración con Google Maps API**
+### **2.1. The Canvas**
 
-* **Importación topográfica:** Localizar el terreno real para obtener dimensiones exactas y orientación cardinal (importante para las sombras).  
-* **Zonificación:** Detección automática del clima local basado en la ubicación.
+* **Terrain Definition:** Dimension input (length/width) or drawing irregular shapes.  
+* **Design Layers:** Separation by levels (Soil, Plants, Infrastructure like paths/fountains).  
+* **Interaction:** Drag-and-drop system with automatic object scaling.
 
-### **3.2. Inteligencia Artificial (IA)**
+### **2.2. Plant Database**
 
-* **Validador de Viabilidad:** Analizar si las plantas elegidas pueden convivir (alelopatía) y si el espacio/luz es suficiente.  
-* **Recomendador Proactivo:** Sugerir plantas "compañeras" que mejoren la salud del jardín o solucionen problemas de drenaje/suelo.
-
-### **3.3. Planificación Temporal y Exportación**
-
-* **Calendarios dinámicos:** Generar un archivo (.ics o PDF) con fechas de siembra, poda y cosecha.  
-* **Guías de mantenimiento:** Instrucciones de riego y abonado personalizadas por temporada.
+* Cards with: Scientific name, light requirements (full sun, shade), soil pH, watering needs, maximum size, and hardiness zone.
 
 ---
 
-## **4\. Ideas para Futuras Versiones**
+## **3. Advanced Features (Differentiators)**
 
-* **Simulación de Crecimiento:** Visualizar el jardín en 1, 5 y 10 años.  
-* **Análisis de Sombras Dinámico:** Simular el movimiento del sol según la estación del año.  
-* **Presupuesto:** Listado de materiales y plantas con precios estimados.
+### **3.1. Google Maps API Integration**
 
+* **Topographic Import:** Locate the actual terrain to obtain exact dimensions and cardinal orientation (important for shadows).  
+* **Zoning:** Automatic detection of local climate based on location.
+
+### **3.2. Artificial Intelligence (AI)**
+
+* **Viability Validator:** Analyze if chosen plants can coexist (allelopathy) and if space/light is sufficient.  
+* **Proactive Recommender:** Suggest "companion" plants that improve garden health or solve drainage/soil problems.
+
+### **3.3. Temporal Planning and Export**
+
+* **Dynamic Calendars:** Generate a file (.ics or PDF) with sowing, pruning, and harvesting dates.  
+* **Maintenance Guides:** Personalized watering and fertilization instructions by season.
+
+---
+
+## **4. Ideas for Future Versions**
+
+* **Growth Simulation:** Visualize the garden in 1, 5, and 10 years.  
+* **Dynamic Shadow Analysis:** Simulate sun movement according to the time of year.  
+* **Budget:** List of materials and plants with estimated prices.
