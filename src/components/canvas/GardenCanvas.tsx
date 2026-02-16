@@ -22,6 +22,8 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
   const [detailPlant, setDetailPlant] = useState<Plant | null>(null);
 
   const {
@@ -43,7 +45,7 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   const terrainHeight = gardenTerrain?.dimensions?.depth ?? config.canvas.defaultHeight;
 
   const scale = useMemo(() => {
-    const padding = 100;
+    const padding = 80;
     const availableWidth = dimensions.width - padding * 2;
     const availableHeight = dimensions.height - padding * 2;
     const pxPerMeterX = availableWidth / terrainWidth;
@@ -51,10 +53,7 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     return Math.min(pxPerMeterX, pxPerMeterY, 30);
   }, [dimensions.width, dimensions.height, terrainWidth, terrainHeight]);
 
-  const terrainPixelWidth = terrainWidth * scale;
-  const terrainPixelHeight = terrainHeight * scale;
-  const terrainX = (dimensions.width - terrainPixelWidth) / 2;
-  const terrainY = (dimensions.height - terrainPixelHeight) / 2;
+  const scaledScale = scale * zoom;
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -70,6 +69,30 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+        setIsPanning(true);
+      }
+    };
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isPanning) {
+        setPan(p => ({ x: p.x + e.movementX, y: p.y + e.movementY }));
+      }
+    };
+    const handleMouseUp = () => {
+      setIsPanning(false);
+    };
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isPanning]);
+
   const handleWheel = useCallback((e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
     const direction = e.evt.deltaY > 0 ? -1 : 1;
@@ -82,19 +105,33 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     e.dataTransfer.dropEffect = 'copy';
   }, []);
 
+  const getTerrainCoords = useCallback((clientX: number, clientY: number) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+
+    const stageX = (clientX - rect.left - pan.x) / scaledScale;
+    const stageY = (clientY - rect.top - pan.y) / scaledScale;
+
+    const terrainPixelWidth = terrainWidth * scale;
+    const terrainPixelHeight = terrainHeight * scale;
+    const terrainX = (dimensions.width - terrainPixelWidth) / 2;
+    const terrainY = (dimensions.height - terrainPixelHeight) / 2;
+
+    const x = (stageX - terrainX) / scale;
+    const y = (stageY - terrainY) / scale;
+
+    return { x, y };
+  }, [pan, scaledScale, terrainWidth, terrainHeight, scale, dimensions]);
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const data = e.dataTransfer.getData('application/json');
     if (!data) return;
 
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    const coords = getTerrainCoords(e.clientX, e.clientY);
+    if (!coords) return;
 
-    const clientX = e.clientX - rect.left;
-    const clientY = e.clientY - rect.top;
-
-    const x = (clientX - terrainX) / scale;
-    const y = (clientY - terrainY) / scale;
+    const { x, y } = coords;
 
     if (x < 0 || x > terrainWidth || y < 0 || y > terrainHeight) {
       return;
@@ -128,32 +165,43 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     } catch (err) {
       console.error('Failed to parse dropped item:', err);
     }
-  }, [scale, terrainX, terrainY, terrainWidth, terrainHeight, addPlant, addObstacle, setSelectedElementId]);
+  }, [getTerrainCoords, terrainWidth, terrainHeight, addPlant, addObstacle, setSelectedElementId]);
+
+  const terrainPixelWidth = terrainWidth * scale;
+  const terrainPixelHeight = terrainHeight * scale;
+  const terrainX = (dimensions.width - terrainPixelWidth) / 2;
+  const terrainY = (dimensions.height - terrainPixelHeight) / 2;
+
+  const toStageX = useCallback((meterX: number) => terrainX + meterX * scale + pan.x, [terrainX, scale, pan.x]);
+  const toStageY = useCallback((meterY: number) => terrainY + meterY * scale + pan.y, [terrainY, scale, pan.y]);
+
+  const fromStageX = useCallback((stageX: number) => (stageX - terrainX - pan.x) / scale, [terrainX, pan.x, scale]);
+  const fromStageY = useCallback((stageY: number) => (stageY - terrainY - pan.y) / scale, [terrainY, pan.y, scale]);
 
   const handlePlantDragEnd = useCallback(
     (instanceId: string) => (e: Konva.KonvaEventObject<DragEvent>) => {
       const node = e.target;
-      const x = (node.x() - terrainX) / scale;
-      const y = (node.y() - terrainY) / scale;
+      const x = fromStageX(node.x());
+      const y = fromStageY(node.y());
       updatePlant(instanceId, { position: { x, y } });
     },
-    [scale, terrainX, terrainY, updatePlant]
+    [fromStageX, fromStageY, updatePlant]
   );
 
   const handleObstacleDragEnd = useCallback(
     (instanceId: string) => (e: Konva.KonvaEventObject<DragEvent>) => {
       const node = e.target;
-      const x = (node.x() - terrainX) / scale;
-      const y = (node.y() - terrainY) / scale;
+      const x = fromStageX(node.x());
+      const y = fromStageY(node.y());
       updateObstacle(instanceId, { x, y });
     },
-    [scale, terrainX, terrainY, updateObstacle]
+    [fromStageX, fromStageY, updateObstacle]
   );
 
   const renderTerrain = () => (
     <Rect
-      x={terrainX}
-      y={terrainY}
+      x={terrainX + pan.x}
+      y={terrainY + pan.y}
       width={terrainPixelWidth}
       height={terrainPixelHeight}
       fill="#e8f5e9"
@@ -168,13 +216,16 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     const gridColor = '#c8e6c9';
     const majorColor = '#81c784';
 
+    const startX = terrainX + pan.x;
+    const startY = terrainY + pan.y;
+
     for (let i = 0; i <= terrainWidth; i += 1) {
-      const x = terrainX + i * scale;
+      const x = startX + i * scale;
       const isMajor = i % 5 === 0;
       lines.push(
         <Line
           key={`v-${i}`}
-          points={[x, terrainY, x, terrainY + terrainPixelHeight]}
+          points={[x, startY, x, startY + terrainPixelHeight]}
           stroke={isMajor ? majorColor : gridColor}
           strokeWidth={isMajor ? 1.5 : 0.5}
         />
@@ -182,12 +233,12 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     }
 
     for (let i = 0; i <= terrainHeight; i += 1) {
-      const y = terrainY + i * scale;
+      const y = startY + i * scale;
       const isMajor = i % 5 === 0;
       lines.push(
         <Line
           key={`h-${i}`}
-          points={[terrainX, y, terrainX + terrainPixelWidth, y]}
+          points={[startX, y, startX + terrainPixelWidth, y]}
           stroke={isMajor ? majorColor : gridColor}
           strokeWidth={isMajor ? 1.5 : 0.5}
         />
@@ -199,8 +250,8 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   const renderPlants = () => plants.map((plant) => {
     const isSelected = selectedElementId === plant.instanceId;
     const size = plant.size.width * plant.scale * scale;
-    const x = terrainX + plant.position.x * scale;
-    const y = terrainY + plant.position.y * scale;
+    const x = toStageX(plant.position.x);
+    const y = toStageY(plant.position.y);
 
     return (
       <Group
@@ -235,8 +286,8 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   const renderObstacles = () => obstacles.map((obstacle) => {
     const isSelected = selectedElementId === obstacle.instanceId;
     const visual = OBSTACLE_VISUALS[obstacle.type];
-    const x = terrainX + obstacle.x * scale;
-    const y = terrainY + obstacle.y * scale;
+    const x = toStageX(obstacle.x);
+    const y = toStageY(obstacle.y);
     const w = obstacle.width * scale;
     const h = obstacle.height * scale;
 
@@ -275,6 +326,7 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     <div
       ref={containerRef}
       className={cn('relative bg-gray-100 overflow-hidden', className)}
+      style={{ cursor: isPanning ? 'grabbing' : 'default' }}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
@@ -282,12 +334,6 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
         ref={stageRef}
         width={dimensions.width}
         height={dimensions.height}
-        scaleX={zoom}
-        scaleY={zoom}
-        x={dimensions.width / 2}
-        y={dimensions.height / 2}
-        offsetX={-dimensions.width / 2}
-        offsetY={-dimensions.height / 2}
         onWheel={handleWheel}
       >
         <Layer>
