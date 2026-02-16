@@ -3,8 +3,7 @@
 import { useGardenStore } from '@/stores/gardenStore';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { GardenCanvas } from '@/components/canvas/GardenCanvas';
-import { PlantLibrary } from '@/components/sidebar/PlantLibrary';
-import { ObstacleLibrary } from '@/components/sidebar/ObstacleLibrary';
+import { Sidebar } from '@/components/sidebar/Sidebar';
 import { PlantDetailModal } from '@/components/ui/PlantDetailModal';
 import { useState } from 'react';
 import type { Plant } from '@/types';
@@ -37,23 +36,7 @@ export default function Home() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-72 bg-[var(--surface)] border-r border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="font-semibold text-[var(--text-primary)]">Plants</h2>
-            <a href="/admin/plants" className="text-xs text-[var(--primary)] hover:underline">
-              Manage
-            </a>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <PlantLibrary />
-          </div>
-          <div className="p-4 border-t border-gray-200">
-            <ObstacleLibrary />
-          </div>
-          <div className="p-4 border-t border-gray-200">
-            <h2 className="font-semibold text-[var(--text-primary)] mb-2">Layers</h2>
-          </div>
-        </aside>
+        <Sidebar />
 
         <main className="flex-1 relative overflow-hidden">
           <GardenCanvas />
