@@ -44,7 +44,7 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   const terrainWidth = gardenTerrain?.dimensions?.width ?? config.canvas.defaultWidth;
   const terrainHeight = gardenTerrain?.dimensions?.depth ?? config.canvas.defaultHeight;
 
-  const scale = useMemo(() => {
+  const baseScale = useMemo(() => {
     const padding = 80;
     const availableWidth = dimensions.width - padding * 2;
     const availableHeight = dimensions.height - padding * 2;
@@ -53,7 +53,12 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     return Math.min(pxPerMeterX, pxPerMeterY, 30);
   }, [dimensions.width, dimensions.height, terrainWidth, terrainHeight]);
 
-  const scaledScale = scale * zoom;
+  const scaledScale = baseScale * zoom;
+
+  const terrainPixelWidth = terrainWidth * scaledScale;
+  const terrainPixelHeight = terrainHeight * scaledScale;
+  const terrainX = (dimensions.width - terrainPixelWidth) / 2;
+  const terrainY = (dimensions.height - terrainPixelHeight) / 2;
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -80,9 +85,7 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
         setPan(p => ({ x: p.x + e.movementX, y: p.y + e.movementY }));
       }
     };
-    const handleMouseUp = () => {
-      setIsPanning(false);
-    };
+    const handleMouseUp = () => setIsPanning(false);
     window.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
@@ -105,33 +108,19 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     e.dataTransfer.dropEffect = 'copy';
   }, []);
 
-  const getTerrainCoords = useCallback((clientX: number, clientY: number) => {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return null;
-
-    const stageX = (clientX - rect.left - pan.x) / scaledScale;
-    const stageY = (clientY - rect.top - pan.y) / scaledScale;
-
-    const terrainPixelWidth = terrainWidth * scale;
-    const terrainPixelHeight = terrainHeight * scale;
-    const terrainX = (dimensions.width - terrainPixelWidth) / 2;
-    const terrainY = (dimensions.height - terrainPixelHeight) / 2;
-
-    const x = (stageX - terrainX) / scale;
-    const y = (stageY - terrainY) / scale;
-
-    return { x, y };
-  }, [pan, scaledScale, terrainWidth, terrainHeight, scale, dimensions]);
-
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const data = e.dataTransfer.getData('application/json');
     if (!data) return;
 
-    const coords = getTerrainCoords(e.clientX, e.clientY);
-    if (!coords) return;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
 
-    const { x, y } = coords;
+    const clientX = e.clientX - rect.left;
+    const clientY = e.clientY - rect.top;
+
+    const x = (clientX - terrainX - pan.x) / scaledScale;
+    const y = (clientY - terrainY - pan.y) / scaledScale;
 
     if (x < 0 || x > terrainWidth || y < 0 || y > terrainHeight) {
       return;
@@ -143,142 +132,74 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
       if (parsed.id && parsed.commonName) {
         const plant: Plant = parsed;
         const instanceId = `${plant.id}-${Date.now()}`;
-        addPlant({
-          ...plant,
-          instanceId,
-          position: { x, y },
-          rotation: 0,
-          scale: 1,
-        });
+        addPlant({ ...plant, instanceId, position: { x, y }, rotation: 0, scale: 1 });
         setSelectedElementId(instanceId);
       } else if (parsed.type && parsed.width !== undefined) {
         const obstacle: PlacedObstacle = parsed;
         const instanceId = `${obstacle.type}-${Date.now()}`;
-        addObstacle({
-          ...obstacle,
-          instanceId,
-          x,
-          y,
-        });
+        addObstacle({ ...obstacle, instanceId, x, y });
         setSelectedElementId(instanceId);
       }
     } catch (err) {
       console.error('Failed to parse dropped item:', err);
     }
-  }, [getTerrainCoords, terrainWidth, terrainHeight, addPlant, addObstacle, setSelectedElementId]);
+  }, [terrainX, terrainY, pan, scaledScale, terrainWidth, terrainHeight, addPlant, addObstacle, setSelectedElementId]);
 
-  const terrainPixelWidth = terrainWidth * scale;
-  const terrainPixelHeight = terrainHeight * scale;
-  const terrainX = (dimensions.width - terrainPixelWidth) / 2;
-  const terrainY = (dimensions.height - terrainPixelHeight) / 2;
+  const toStageX = useCallback((meterX: number) => terrainX + meterX * scaledScale + pan.x, [terrainX, scaledScale, pan.x]);
+  const toStageY = useCallback((meterY: number) => terrainY + meterY * scaledScale + pan.y, [terrainY, scaledScale, pan.y]);
 
-  const toStageX = useCallback((meterX: number) => terrainX + meterX * scale + pan.x, [terrainX, scale, pan.x]);
-  const toStageY = useCallback((meterY: number) => terrainY + meterY * scale + pan.y, [terrainY, scale, pan.y]);
+  const fromStageX = useCallback((stageX: number) => (stageX - terrainX - pan.x) / scaledScale, [terrainX, pan.x, scaledScale]);
+  const fromStageY = useCallback((stageY: number) => (stageY - terrainY - pan.y) / scaledScale, [terrainY, pan.y, scaledScale]);
 
-  const fromStageX = useCallback((stageX: number) => (stageX - terrainX - pan.x) / scale, [terrainX, pan.x, scale]);
-  const fromStageY = useCallback((stageY: number) => (stageY - terrainY - pan.y) / scale, [terrainY, pan.y, scale]);
+  const handlePlantDragEnd = useCallback((instanceId: string) => (e: Konva.KonvaEventObject<DragEvent>) => {
+    const node = e.target;
+    updatePlant(instanceId, { position: { x: fromStageX(node.x()), y: fromStageY(node.y()) } });
+  }, [fromStageX, fromStageY, updatePlant]);
 
-  const handlePlantDragEnd = useCallback(
-    (instanceId: string) => (e: Konva.KonvaEventObject<DragEvent>) => {
-      const node = e.target;
-      const x = fromStageX(node.x());
-      const y = fromStageY(node.y());
-      updatePlant(instanceId, { position: { x, y } });
-    },
-    [fromStageX, fromStageY, updatePlant]
-  );
-
-  const handleObstacleDragEnd = useCallback(
-    (instanceId: string) => (e: Konva.KonvaEventObject<DragEvent>) => {
-      const node = e.target;
-      const x = fromStageX(node.x());
-      const y = fromStageY(node.y());
-      updateObstacle(instanceId, { x, y });
-    },
-    [fromStageX, fromStageY, updateObstacle]
-  );
+  const handleObstacleDragEnd = useCallback((instanceId: string) => (e: Konva.KonvaEventObject<DragEvent>) => {
+    const node = e.target;
+    updateObstacle(instanceId, { x: fromStageX(node.x()), y: fromStageY(node.y()) });
+  }, [fromStageX, fromStageY, updateObstacle]);
 
   const renderTerrain = () => (
-    <Rect
-      x={terrainX + pan.x}
-      y={terrainY + pan.y}
-      width={terrainPixelWidth}
-      height={terrainPixelHeight}
-      fill="#e8f5e9"
-      stroke="#2e7d32"
-      strokeWidth={4}
-      cornerRadius={4}
-    />
+    <Rect x={terrainX + pan.x} y={terrainY + pan.y} width={terrainPixelWidth} height={terrainPixelHeight}
+      fill="#e8f5e9" stroke="#2e7d32" strokeWidth={4} cornerRadius={4} />
   );
 
   const renderGrid = () => {
     const lines: ReactNode[] = [];
     const gridColor = '#c8e6c9';
     const majorColor = '#81c784';
-
     const startX = terrainX + pan.x;
     const startY = terrainY + pan.y;
 
     for (let i = 0; i <= terrainWidth; i += 1) {
-      const x = startX + i * scale;
+      const x = startX + i * scaledScale;
       const isMajor = i % 5 === 0;
-      lines.push(
-        <Line
-          key={`v-${i}`}
-          points={[x, startY, x, startY + terrainPixelHeight]}
-          stroke={isMajor ? majorColor : gridColor}
-          strokeWidth={isMajor ? 1.5 : 0.5}
-        />
-      );
+      lines.push(<Line key={`v-${i}`} points={[x, startY, x, startY + terrainPixelHeight]}
+        stroke={isMajor ? majorColor : gridColor} strokeWidth={isMajor ? 1.5 : 0.5} />);
     }
-
     for (let i = 0; i <= terrainHeight; i += 1) {
-      const y = startY + i * scale;
+      const y = startY + i * scaledScale;
       const isMajor = i % 5 === 0;
-      lines.push(
-        <Line
-          key={`h-${i}`}
-          points={[startX, y, startX + terrainPixelWidth, y]}
-          stroke={isMajor ? majorColor : gridColor}
-          strokeWidth={isMajor ? 1.5 : 0.5}
-        />
-      );
+      lines.push(<Line key={`h-${i}`} points={[startX, y, startX + terrainPixelWidth, y]}
+        stroke={isMajor ? majorColor : gridColor} strokeWidth={isMajor ? 1.5 : 0.5} />);
     }
     return lines;
   };
 
   const renderPlants = () => plants.map((plant) => {
     const isSelected = selectedElementId === plant.instanceId;
-    const size = plant.size.width * plant.scale * scale;
+    const size = plant.size.width * plant.scale * scaledScale;
     const x = toStageX(plant.position.x);
     const y = toStageY(plant.position.y);
 
     return (
-      <Group
-        key={plant.instanceId}
-        x={x}
-        y={y}
-        rotation={plant.rotation}
-        draggable={tool === 'select'}
-        onClick={() => setSelectedElementId(plant.instanceId)}
-        onDragEnd={handlePlantDragEnd(plant.instanceId)}
-      >
-        <Circle
-          radius={size / 2}
-          fill={isSelected ? '#7CB342' : '#2D5A27'}
-          opacity={0.8}
-          stroke={isSelected ? '#FFB300' : 'transparent'}
-          strokeWidth={isSelected ? 3 : 0}
-        />
-        <Text
-          text={plant.commonName}
-          fontSize={12}
-          fill="#2C2C2C"
-          align="center"
-          offsetX={30}
-          offsetY={-size / 2 - 8}
-          width={60}
-        />
+      <Group key={plant.instanceId} x={x} y={y} rotation={plant.rotation} draggable={tool === 'select'}
+        onClick={() => setSelectedElementId(plant.instanceId)} onDragEnd={handlePlantDragEnd(plant.instanceId)}>
+        <Circle radius={size / 2} fill={isSelected ? '#7CB342' : '#2D5A27'} opacity={0.8}
+          stroke={isSelected ? '#FFB300' : 'transparent'} strokeWidth={isSelected ? 3 : 0} />
+        <Text text={plant.commonName} fontSize={12} fill="#2C2C2C" align="center" offsetX={30} offsetY={-size / 2 - 8} width={60} />
       </Group>
     );
   });
@@ -288,69 +209,33 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     const visual = OBSTACLE_VISUALS[obstacle.type];
     const x = toStageX(obstacle.x);
     const y = toStageY(obstacle.y);
-    const w = obstacle.width * scale;
-    const h = obstacle.height * scale;
+    const w = obstacle.width * scaledScale;
+    const h = obstacle.height * scaledScale;
 
-    const commonProps = {
-      fill: isSelected ? visual.bgColor : visual.color,
-      stroke: isSelected ? '#FFB300' : visual.bgColor,
-      strokeWidth: isSelected ? 3 : 1,
-      opacity: 0.9 as const,
-    };
+    const props = { fill: isSelected ? visual.bgColor : visual.color,
+      stroke: isSelected ? '#FFB300' : visual.bgColor, strokeWidth: isSelected ? 3 : 1, opacity: 0.9 as const };
 
-    let shape;
-    if (visual.shape === 'circle') {
-      shape = <Circle x={x + w/2} y={y + h/2} radius={Math.min(w, h)/2} {...commonProps} />;
-    } else if (visual.shape === 'ellipse') {
-      shape = <Ellipse x={x + w/2} y={y + h/2} radiusX={w/2} radiusY={h/2} {...commonProps} />;
-    } else {
-      shape = <Rect x={x} y={y} width={w} height={h} {...commonProps} />;
-    }
+    const shape = visual.shape === 'circle' ? <Circle x={x + w/2} y={y + h/2} radius={Math.min(w, h)/2} {...props} />
+      : visual.shape === 'ellipse' ? <Ellipse x={x + w/2} y={y + h/2} radiusX={w/2} radiusY={h/2} {...props} />
+      : <Rect x={x} y={y} width={w} height={h} {...props} />;
 
     return (
-      <Group
-        key={obstacle.instanceId}
-        x={x}
-        y={y}
-        rotation={obstacle.rotation}
-        draggable={tool === 'select'}
-        onClick={() => setSelectedElementId(obstacle.instanceId)}
-        onDragEnd={handleObstacleDragEnd(obstacle.instanceId)}
-      >
+      <Group key={obstacle.instanceId} x={x} y={y} rotation={obstacle.rotation} draggable={tool === 'select'}
+        onClick={() => setSelectedElementId(obstacle.instanceId)} onDragEnd={handleObstacleDragEnd(obstacle.instanceId)}>
         {shape}
       </Group>
     );
   });
 
   return (
-    <div
-      ref={containerRef}
-      className={cn('relative bg-gray-100 overflow-hidden', className)}
-      style={{ cursor: isPanning ? 'grabbing' : 'default' }}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-    >
-      <Stage
-        ref={stageRef}
-        width={dimensions.width}
-        height={dimensions.height}
-        onWheel={handleWheel}
-      >
-        <Layer>
-          {renderGrid()}
-          {renderTerrain()}
-          {renderObstacles()}
-          {renderPlants()}
-        </Layer>
+    <div ref={containerRef} className={cn('relative bg-gray-100 overflow-hidden', className)}
+      style={{ cursor: isPanning ? 'grabbing' : 'default' }} onDragOver={handleDragOver} onDrop={handleDrop}>
+      <Stage ref={stageRef} width={dimensions.width} height={dimensions.height} onWheel={handleWheel}>
+        <Layer>{renderGrid()}{renderTerrain()}{renderObstacles()}{renderPlants()}</Layer>
       </Stage>
-
       <PlantSelectionToolbar onShowDetail={setDetailPlant} />
       <PlantTransformControls />
-
-      <div className="absolute bottom-4 left-4 bg-white px-3 py-1 rounded shadow-md text-sm text-gray-600">
-        {terrainWidth}m × {terrainHeight}m
-      </div>
-
+      <div className="absolute bottom-4 left-4 bg-white px-3 py-1 rounded shadow-md text-sm text-gray-600">{terrainWidth}m × {terrainHeight}m</div>
       <div className="absolute bottom-4 right-4 flex items-center gap-2">
         <div className="flex flex-col bg-white rounded-lg shadow-md">
           <button onClick={() => setZoom(z => Math.min(3, z * 1.2))} className="px-3 py-2 hover:bg-gray-100 rounded-t-lg border-b border-gray-200">+</button>
@@ -358,7 +243,6 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
         </div>
         <div className="bg-white px-3 py-1 rounded shadow-md text-sm text-gray-600">{Math.round(zoom * 100)}%</div>
       </div>
-
       {detailPlant && <PlantDetailModal plant={detailPlant} onClose={() => setDetailPlant(null)} />}
     </div>
   );
