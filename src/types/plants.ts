@@ -141,12 +141,34 @@ export interface Size {
   height: number;
 }
 
-export interface PlacedPlant extends Plant {
+export interface PlacedElement {
   instanceId: string;
   position: Position;
   rotation: number;
+}
+
+export interface PlacedPlant extends PlacedElement, Plant {
   scale: number;
 }
+
+export interface PlacedObstacle extends PlacedElement {
+  type: ObstacleType;
+  width: number;
+  height: number;
+  visual?: string;
+  label?: string;
+}
+
+export type ObstacleType = 
+  | 'tree'
+  | 'rock'
+  | 'shed'
+  | 'fence'
+  | 'pond'
+  | 'well'
+  | 'path'
+  | 'wall'
+  | 'house';
 
 // Garden Context (for validation)
 export interface GardenContext {

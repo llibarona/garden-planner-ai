@@ -47,25 +47,3 @@ export interface GardenTemplate {
   icon: string;
   terrain: Omit<Terrain, 'id' | 'name'>;
 }
-
-export type ObstacleType = 
-  | 'tree'
-  | 'rock'
-  | 'shed'
-  | 'fence'
-  | 'pond'
-  | 'well'
-  | 'path'
-  | 'wall'
-  | 'house';
-
-export interface PlacedObstacle {
-  instanceId: string;
-  type: ObstacleType;
-  position: { x: number; y: number };
-  width: number;
-  height: number;
-  rotation: number;
-  color?: string;
-  label?: string;
-}
