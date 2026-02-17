@@ -35,7 +35,7 @@ const defaultLayers: Layer[] = [
   { id: 'annotations', name: 'Annotations', visible: true, locked: false, zIndex: 40 },
 ];
 
-export const useCanvasStore = create<CanvasStore>((set) => ({
+export const useCanvasStore = create<CanvasStore>((set, get) => ({
   tool: 'select',
   zoom: 1,
   panOffset: { x: 0, y: 0 },
@@ -60,68 +60,43 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
         layer.id === layerId ? { ...layer, locked: !layer.locked } : layer
       ),
     })),
-  addPlant: (plant) =>
-    set((state) => ({ plants: [...state.plants, plant] })),
-  removePlant: (id) =>
-    set((state) => ({ plants: state.plants.filter((p) => p.instanceId !== id) })),
+  setTerrain: (terrain) => set({ terrain }),
+  addPlant: (plant) => set((state) => ({ plants: [...state.plants, plant] })),
+  removePlant: (id) => set((state) => ({ plants: state.plants.filter((p) => p.instanceId !== id) })),
   updatePlant: (id, updates) =>
     set((state) => ({
-      plants: state.plants.map((p) =>
-        p.instanceId === id ? { ...p, ...updates } : p
-      ),
+      plants: state.plants.map((p) => (p.instanceId === id ? { ...p, ...updates } : p)),
     })),
-  setTerrain: (terrain) => set({ terrain }),
   duplicatePlant: (id, offset = { x: 30, y: 30 }) => {
-    let newInstanceId: string | null = null;
-    set((state) => {
-      const plant = state.plants.find((p) => p.instanceId === id);
-      if (!plant) return state;
-
-      newInstanceId = `${plant.id}-${Date.now()}`;
-      const newPlant: PlacedPlant = {
-        ...plant,
-        instanceId: newInstanceId,
-        position: {
-          x: plant.position.x + offset.x,
-          y: plant.position.y + offset.y,
-        },
-      };
-
-      return {
-        plants: [...state.plants, newPlant],
-        selectedElementId: newInstanceId,
-      };
-    });
+    const state = get();
+    const plant = state.plants.find((p) => p.instanceId === id);
+    if (!plant) return null;
+    const newInstanceId = `${plant.id}-${Date.now()}`;
+    const newPlant: PlacedPlant = {
+      ...plant,
+      instanceId: newInstanceId,
+      position: { x: plant.position.x + offset.x, y: plant.position.y + offset.y },
+    };
+    set({ plants: [...state.plants, newPlant], selectedElementId: newInstanceId });
     return newInstanceId;
   },
-  addObstacle: (obstacle) =>
-    set((state) => ({ obstacles: [...state.obstacles, obstacle] })),
-  removeObstacle: (id) =>
-    set((state) => ({ obstacles: state.obstacles.filter((o) => o.instanceId !== id) })),
+  addObstacle: (obstacle) => set((state) => ({ obstacles: [...state.obstacles, obstacle] })),
+  removeObstacle: (id) => set((state) => ({ obstacles: state.obstacles.filter((o) => o.instanceId !== id) })),
   updateObstacle: (id, updates) =>
     set((state) => ({
-      obstacles: state.obstacles.map((o) =>
-        o.instanceId === id ? { ...o, ...updates } : o
-      ),
+      obstacles: state.obstacles.map((o) => (o.instanceId === id ? { ...o, ...updates } : o)),
     })),
   duplicateObstacle: (id, offset = { x: 30, y: 30 }) => {
-    let newInstanceId: string | null = null;
-    set((state) => {
-      const obstacle = state.obstacles.find((o) => o.instanceId === id);
-      if (!obstacle) return state;
-
-      newInstanceId = `${obstacle.type}-${Date.now()}`;
-      const newObstacle: PlacedObstacle = {
-        ...obstacle,
-        instanceId: newInstanceId,
-        position: { x: obstacle.position.x + offset.x, y: obstacle.position.y + offset.y },
-      };
-
-      return {
-        obstacles: [...state.obstacles, newObstacle],
-        selectedElementId: newInstanceId,
-      };
-    });
+    const state = get();
+    const obstacle = state.obstacles.find((o) => o.instanceId === id);
+    if (!obstacle) return null;
+    const newInstanceId = `${obstacle.type}-${Date.now()}`;
+    const newObstacle: PlacedObstacle = {
+      ...obstacle,
+      instanceId: newInstanceId,
+      position: { x: obstacle.position.x + offset.x, y: obstacle.position.y + offset.y },
+    };
+    set({ obstacles: [...state.obstacles, newObstacle], selectedElementId: newInstanceId });
     return newInstanceId;
   },
 }));
