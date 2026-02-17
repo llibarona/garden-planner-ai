@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useCanvasStore } from '@/stores/canvasStore';
 import { cn } from '@/lib/utils';
 
@@ -9,36 +9,74 @@ interface PlantTransformControlsProps {
 }
 
 export function PlantTransformControls({ className }: PlantTransformControlsProps) {
-  const { selectedElementId, plants, updatePlant, setSelectedElementId, duplicatePlant } = useCanvasStore();
+  const { 
+    selectedElementId, 
+    plants, 
+    obstacles,
+    updatePlant, 
+    updateObstacle,
+    setSelectedElementId, 
+    duplicatePlant,
+    duplicateObstacle,
+    removePlant,
+    removeObstacle,
+  } = useCanvasStore();
+  
   const selectedPlant = plants.find((p) => p.instanceId === selectedElementId);
-
-  const [scale, setScale] = useState(selectedPlant?.scale ?? 1);
-  const [rotation, setRotation] = useState(selectedPlant?.rotation ?? 0);
+  const selectedObstacle = obstacles.find((o) => o.instanceId === selectedElementId);
 
   const handleScaleChange = useCallback((newScale: number) => {
     if (!selectedElementId) return;
-    setScale(newScale);
     updatePlant(selectedElementId, { scale: newScale });
   }, [selectedElementId, updatePlant]);
 
   const handleRotationChange = useCallback((newRotation: number) => {
     if (!selectedElementId) return;
-    setRotation(newRotation);
-    updatePlant(selectedElementId, { rotation: newRotation });
-  }, [selectedElementId, updatePlant]);
+    if (selectedObstacle) {
+      updateObstacle(selectedElementId, { rotation: newRotation });
+    } else {
+      updatePlant(selectedElementId, { rotation: newRotation });
+    }
+  }, [selectedElementId, selectedObstacle, updatePlant, updateObstacle]);
+
+  const handleObstacleWidthChange = useCallback((newWidth: number) => {
+    if (!selectedElementId) return;
+    updateObstacle(selectedElementId, { width: newWidth });
+  }, [selectedElementId, updateObstacle]);
+
+  const handleObstacleHeightChange = useCallback((newHeight: number) => {
+    if (!selectedElementId) return;
+    updateObstacle(selectedElementId, { height: newHeight });
+  }, [selectedElementId, updateObstacle]);
+
+  const handleRemove = useCallback(() => {
+    if (selectedObstacle) {
+      removeObstacle(selectedElementId!);
+    } else if (selectedPlant) {
+      removePlant(selectedElementId!);
+    }
+    setSelectedElementId(null);
+  }, [selectedElementId, selectedObstacle, selectedPlant, removeObstacle, removePlant, setSelectedElementId]);
+
+  const handleDuplicate = useCallback(() => {
+    if (selectedObstacle) {
+      duplicateObstacle(selectedElementId!);
+    } else if (selectedPlant) {
+      duplicatePlant(selectedElementId!);
+    }
+  }, [selectedElementId, selectedObstacle, selectedPlant, duplicateObstacle, duplicatePlant]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!selectedElementId) return;
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        useCanvasStore.getState().removePlant(selectedElementId);
-        setSelectedElementId(null);
+        handleRemove();
       }
 
       if (e.ctrlKey && e.key === 'd') {
         e.preventDefault();
-        duplicatePlant(selectedElementId);
+        handleDuplicate();
       }
 
       if (e.key === 'Escape') {
@@ -48,9 +86,14 @@ export function PlantTransformControls({ className }: PlantTransformControlsProp
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedElementId, duplicatePlant, setSelectedElementId]);
+  }, [selectedElementId, handleRemove, handleDuplicate, setSelectedElementId]);
 
-  if (!selectedPlant || !selectedElementId) return null;
+  if (!selectedElementId) return null;
+
+  const isObstacle = !!selectedObstacle;
+  const isPlant = !!selectedPlant;
+
+  if (!isObstacle && !isPlant) return null;
 
   return (
     <div
@@ -59,21 +102,59 @@ export function PlantTransformControls({ className }: PlantTransformControlsProp
         className
       )}
     >
-      <div className="flex items-center gap-3">
-        <span className="text-xs text-gray-500 whitespace-nowrap">Scale</span>
-        <input
-          type="range"
-          min="0.25"
-          max="3"
-          step="0.1"
-          value={scale}
-          onChange={(e) => handleScaleChange(parseFloat(e.target.value))}
-          className="w-24"
-        />
-        <span className="text-xs text-gray-600 w-12">{Math.round(scale * 100)}%</span>
-      </div>
+      {isPlant && (
+        <>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500 whitespace-nowrap">Scale</span>
+            <input
+              type="range"
+              min="0.25"
+              max="3"
+              step="0.1"
+              value={selectedPlant?.scale ?? 1}
+              onChange={(e) => handleScaleChange(parseFloat(e.target.value))}
+              className="w-24"
+            />
+            <span className="text-xs text-gray-600 w-12">{Math.round((selectedPlant?.scale ?? 1) * 100)}%</span>
+          </div>
 
-      <div className="h-6 w-px bg-gray-200" />
+          <div className="h-6 w-px bg-gray-200" />
+        </>
+      )}
+
+      {isObstacle && (
+        <>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500 whitespace-nowrap">Width</span>
+            <input
+              type="range"
+              min="0.5"
+              max="20"
+              step="0.5"
+              value={selectedObstacle?.width ?? 1}
+              onChange={(e) => handleObstacleWidthChange(parseFloat(e.target.value))}
+              className="w-20"
+            />
+            <span className="text-xs text-gray-600 w-10">{selectedObstacle?.width ?? 1}m</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500 whitespace-nowrap">Height</span>
+            <input
+              type="range"
+              min="0.5"
+              max="20"
+              step="0.5"
+              value={selectedObstacle?.height ?? 1}
+              onChange={(e) => handleObstacleHeightChange(parseFloat(e.target.value))}
+              className="w-20"
+            />
+            <span className="text-xs text-gray-600 w-10">{selectedObstacle?.height ?? 1}m</span>
+          </div>
+
+          <div className="h-6 w-px bg-gray-200" />
+        </>
+      )}
 
       <div className="flex items-center gap-3">
         <span className="text-xs text-gray-500 whitespace-nowrap">Rotation</span>
@@ -82,11 +163,11 @@ export function PlantTransformControls({ className }: PlantTransformControlsProp
           min="0"
           max="360"
           step="15"
-          value={rotation}
+          value={(selectedObstacle ?? selectedPlant)?.rotation ?? 0}
           onChange={(e) => handleRotationChange(parseFloat(e.target.value))}
           className="w-24"
         />
-        <span className="text-xs text-gray-600 w-12">{Math.round(rotation)}°</span>
+        <span className="text-xs text-gray-600 w-12">{Math.round((selectedObstacle ?? selectedPlant)?.rotation ?? 0)}°</span>
       </div>
 
       <div className="h-6 w-px bg-gray-200" />
