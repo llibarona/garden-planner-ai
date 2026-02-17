@@ -4,7 +4,6 @@ import { useRef, useCallback, useEffect, useState, useMemo, type ReactNode } fro
 import { Stage, Layer, Rect, Circle, Group, Text, Line, Ellipse } from 'react-konva';
 import type Konva from 'konva';
 import { useCanvasStore } from '@/stores/canvasStore';
-import { useConfigStore } from '@/stores/configStore';
 import { useGardenStore } from '@/stores/gardenStore';
 import { cn } from '@/lib/utils';
 import type { Plant, PlacedObstacle } from '@/types';
@@ -39,7 +38,6 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
   } = useCanvasStore();
 
   const { terrain: gardenTerrain } = useGardenStore();
-  const { config } = useConfigStore();
 
   const terrainWidth = gardenTerrain?.dimensions?.width ?? 20;
   const terrainHeight = gardenTerrain?.dimensions?.depth ?? 20;
@@ -137,7 +135,7 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
       } else if (parsed.type) {
         const obstacle: PlacedObstacle = parsed;
         const instanceId = `${obstacle.type}-${Date.now()}`;
-        addObstacle({ ...obstacle, instanceId, x, y });
+        addObstacle({ ...obstacle, instanceId, position: { x, y } });
         setSelectedElementId(instanceId);
       }
     } catch (err) {
@@ -158,7 +156,7 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
 
   const handleObstacleDragEnd = useCallback((instanceId: string) => (e: Konva.KonvaEventObject<DragEvent>) => {
     const node = e.target;
-    updateObstacle(instanceId, { x: fromStageX(node.x()), y: fromStageY(node.y()) });
+    updateObstacle(instanceId, { position: { x: fromStageX(node.x()), y: fromStageY(node.y()) } });
   }, [fromStageX, fromStageY, updateObstacle]);
 
   const renderTerrain = () => (
@@ -210,8 +208,8 @@ export function GardenCanvas({ className }: GardenCanvasProps) {
     return obstacles.map((obstacle) => {
       const isSelected = selectedElementId === obstacle.instanceId;
       const visual = OBSTACLE_VISUALS[obstacle.type];
-      const x = toStageX(obstacle.x);
-      const y = toStageY(obstacle.y);
+      const x = toStageX(obstacle.position.x);
+      const y = toStageY(obstacle.position.y);
       const w = obstacle.width * scaledScale;
       const h = obstacle.height * scaledScale;
 

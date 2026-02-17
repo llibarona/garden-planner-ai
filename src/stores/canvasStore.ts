@@ -114,8 +114,7 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
       const newObstacle: PlacedObstacle = {
         ...obstacle,
         instanceId: newInstanceId,
-        x: obstacle.x + offset.x,
-        y: obstacle.y + offset.y,
+        position: { x: obstacle.position.x + offset.x, y: obstacle.position.y + offset.y },
       };
 
       return {

@@ -42,8 +42,7 @@ export function ObstacleLibrary({ className }: ObstacleLibraryProps) {
     const visual = OBSTACLE_VISUALS[type];
     const obstacleData: Omit<PlacedObstacle, 'instanceId'> = {
       type,
-      x: 0,
-      y: 0,
+      position: { x: 0, y: 0 },
       width: visual.defaultWidth,
       height: visual.defaultHeight,
       rotation: 0,

@@ -62,8 +62,7 @@ export type ObstacleType =
 export interface PlacedObstacle {
   instanceId: string;
   type: ObstacleType;
-  x: number;
-  y: number;
+  position: { x: number; y: number };
   width: number;
   height: number;
   rotation: number;
